@@ -3,7 +3,7 @@ import {App, CfnOutput, Stack} from '@aws-cdk/core';
 import {expect} from 'chai';
 import * as sns from '@aws-cdk/aws-sns';
 import * as path from 'path';
-import {CdkStackDescription, CdkUtilProps, deployStack, describeStack, destroyStack} from "./index";
+import {CdkStackDescription, CdkUtilProps, deployStack, describeStack, destroyStack, withStack} from "./index";
 
 /**
  * CDK output directory
@@ -39,7 +39,7 @@ describe('cdk-util-test', () => {
     await destroyStack({name: id, app, exclusively: true});
   });
 
-  it('should create a stack with topic', stackShould({name: id, app, exclusively: true}, async ({environment, stack}) => {
+  it('should create a stack with topic', withStack({name: id, app, exclusively: true}, async ({environment, stack}) => {
     // When
     const topicArn = stack.Outputs!!.find(it => it.OutputKey === 'TopicArn')!!.OutputValue;
     // Then
@@ -47,11 +47,3 @@ describe('cdk-util-test', () => {
   }));
 });
 
-function stackShould(props: CdkUtilProps, block: (descr: CdkStackDescription) => Promise<void>) {
-  return (done: any) => {
-    describeStack(props)
-      .then(block)
-      .then(() => done())
-      .catch(err => done(err));
-  };
-}

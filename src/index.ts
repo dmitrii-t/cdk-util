@@ -131,3 +131,12 @@ export async function destroyStack(props: CdkUtilProps): Promise<void> {
   const cdkCtx = await new CdkContext(app, name, exclusively);
   await cdkCtx.destroy();
 }
+
+export function withStack(props: CdkUtilProps, block: (descr: CdkStackDescription) => Promise<void>) {
+  return (done: any) => {
+    describeStack(props)
+      .then(block)
+      .then(() => done())
+      .catch(err => done(err));
+  };
+}
