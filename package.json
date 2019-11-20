@@ -38,7 +38,6 @@
     "@types/chai": "^4.2.4",
     "@types/mocha": "^5.2.7",
     "@types/node": "^10.14.10",
-    "cdk": "1.17.1",
     "chai": "^4.2.0",
     "cross-env": "^5.2.0",
     "env-cmd": "^10.0.1",
@@ -50,6 +49,6 @@
     "typescript": "^3.7.2"
   },
   "dependencies": {
-    "aws-cdk": "1.14.0"
+    "aws-cdk": "1.17.1"
   }
 }
