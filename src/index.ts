@@ -1,4 +1,5 @@
-import core, {Environment} from '@aws-cdk/core';
+import * as core from '@aws-cdk/core';
+import {Environment} from '@aws-cdk/core';
 import {RequireApproval} from 'aws-cdk/lib/diff';
 import {CloudFormation} from 'aws-sdk';
 import {Configuration} from 'aws-cdk/lib/settings';

@@ -2,19 +2,23 @@
   "name": "cdk-util",
   "version": "0.1.1",
   "description": "cdk-util",
-  "main": "",
+  "main": "dist/index.js",
   "license": "MIT",
+  "repository": "https://github.com/dtcimbal/cdk-util.git",
   "engines": {
     "node": ">=10.x"
   },
   "scripts": {
-    "tst": "TS_NODE_PROJECT=tsconfig.json env-cmd mocha --timeout 600000 --require ./babel-hook.js \"./src/**/*.spec.ts\"",
-    "lnt": "tslint -c tslint.json 'src/**/*.ts'",
-    "typ": "tsc"
+    "build": "babel ./src --out-dir ./dist --extensions \".ts\" --ignore \"src/**/*.spec.ts\" --source-maps",
+    "test": "env-cmd mocha --timeout 600000 --require ./babel-hook.js \"./src/**/*.spec.ts\"",
+    "lint": "tslint -c tslint.json 'src/**/*.ts'",
+    "type": "tsc"
   },
   "keywords": [
     "typescript",
     "cdk-util",
+    "aws-cdk",
+    "cloud",
     "aws"
   ],
   "devDependencies": {
@@ -36,15 +40,14 @@
     "@aws-cdk/aws-sns": "1.14.0",
     "@aws-cdk/aws-sqs": "1.14.0",
     "@aws-cdk/core": "1.14.0",
-    "@babel/core": "^7.2.0",
-    "@babel/plugin-proposal-class-properties": "^7.2.0",
+    "@babel/core": "^7.7.0",
+    "@babel/plugin-proposal-class-properties": "^7.7.0",
     "@babel/plugin-proposal-numeric-separator": "^7.2.0",
     "@babel/plugin-proposal-object-rest-spread": "^7.2.0",
-    "@babel/plugin-transform-modules-commonjs": "^7.2.0",
-    "@babel/plugin-transform-runtime": "^7.2.0",
-    "@babel/preset-env": "^7.2.0",
-    "@babel/preset-typescript": "^7.2.0",
-    "@babel/register": "^7.6.2",
+    "@babel/preset-env": "^7.7.0",
+    "@babel/preset-typescript": "^7.7.0",
+    "@babel/register": "^7.7.0",
+    "@babel/cli": "^7.7.0",
     "@types/aws-lambda": "^8.10.33",
     "@types/chai": "^4.2.4",
     "@types/mocha": "^5.2.7",
@@ -62,7 +65,6 @@
   },
   "dependencies": {
     "@babel/polyfill": "^7.2.5",
-    "@babel/runtime": "^7.6.2",
     "aws-cdk": "1.14.0",
     "dotenv": "^8.1.0",
     "tslib": "^1.9.3"
