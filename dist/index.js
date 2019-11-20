@@ -22,8 +22,6 @@ var _credentials = require("aws-cdk/lib/api/aws-auth/credentials");
 
 var _sdk = require("aws-cdk/lib/api/util/sdk");
 
-function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
-
 const cfn = require('aws-cdk/lib/api/util/cloudformation');
 /**
  * CDK context
@@ -39,15 +37,6 @@ class CdkContext {
     this.exclusively = exclusively;
     this.tags = tags;
     this.aws = aws;
-
-    _defineProperty(this, "config", void 0);
-
-    _defineProperty(this, "appStacks", void 0);
-
-    _defineProperty(this, "cdkToolkit", void 0);
-
-    _defineProperty(this, "provisioner", void 0);
-
     this.config = new _settings.Configuration({});
     this.appStacks = new _stacks.AppStacks({
       configuration: this.config,

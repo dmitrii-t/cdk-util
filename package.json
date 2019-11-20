@@ -1,6 +1,6 @@
 {
   "name": "cdk-util",
-  "version": "0.1.1",
+  "version": "1.1.1",
   "description": "cdk-util",
   "main": "dist/index.js",
   "license": "MIT",
@@ -9,8 +9,9 @@
     "node": ">=10.x"
   },
   "scripts": {
-    "build": "babel ./src --out-dir ./dist --extensions \".ts\" --ignore \"src/**/*.spec.ts\" --source-maps",
-    "test": "env-cmd mocha --timeout 600000 --require ./babel-hook.js \"./src/**/*.spec.ts\"",
+    "clean": "rimraf dist",
+    "build": "TS_NODE_PROJECT=tsconfig.json babel ./src --out-dir ./dist --extensions \".ts\" --ignore \"src/**/*.spec.ts\" --source-maps",
+    "test": "TS_NODE_PROJECT=tsconfig.json env-cmd mocha --timeout 600000 --require ./babel-hook.js \"./src/**/*.spec.ts\"",
     "lint": "tslint -c tslint.json 'src/**/*.ts'",
     "type": "tsc"
   },
@@ -22,24 +23,11 @@
     "aws"
   ],
   "devDependencies": {
-    "@aws-cdk/assets": "1.14.0",
-    "@aws-cdk/aws-apigateway": "1.14.0",
-    "@aws-cdk/aws-cloudtrail": "1.14.0",
-    "@aws-cdk/aws-cloudwatch": "1.14.0",
-    "@aws-cdk/aws-ec2": "1.14.0",
-    "@aws-cdk/aws-elasticloadbalancingv2": "1.14.0",
-    "@aws-cdk/aws-elasticsearch": "1.14.0",
-    "@aws-cdk/aws-iam": "1.14.0",
-    "@aws-cdk/aws-kinesis": "1.14.0",
-    "@aws-cdk/aws-lambda": "1.14.0",
-    "@aws-cdk/aws-lambda-event-sources": "1.14.0",
-    "@aws-cdk/aws-s3": "1.14.0",
-    "@aws-cdk/aws-s3-assets": "1.14.0",
-    "@aws-cdk/aws-ses": "1.14.0",
-    "@aws-cdk/aws-ses-actions": "1.14.0",
-    "@aws-cdk/aws-sns": "1.14.0",
-    "@aws-cdk/aws-sqs": "1.14.0",
-    "@aws-cdk/core": "1.14.0",
+    "@aws-cdk/aws-sns": "^1.17.1",
+    "@aws-cdk/core": "^1.17.1",
+    "@aws-cdk/cx-api": "^1.17.1",
+    "@aws-cdk/region-info": "^1.17.1",
+    "@babel/cli": "^7.7.0",
     "@babel/core": "^7.7.0",
     "@babel/plugin-proposal-class-properties": "^7.7.0",
     "@babel/plugin-proposal-numeric-separator": "^7.2.0",
@@ -47,26 +35,21 @@
     "@babel/preset-env": "^7.7.0",
     "@babel/preset-typescript": "^7.7.0",
     "@babel/register": "^7.7.0",
-    "@babel/cli": "^7.7.0",
-    "@types/aws-lambda": "^8.10.33",
     "@types/chai": "^4.2.4",
     "@types/mocha": "^5.2.7",
     "@types/node": "^10.14.10",
-    "cdk": "1.14.0",
+    "cdk": "1.17.1",
     "chai": "^4.2.0",
-    "concurrently": "^4.1.0",
     "cross-env": "^5.2.0",
     "env-cmd": "^10.0.1",
     "mocha": "^6.2.2",
     "rimraf": "^2.6.3",
     "tsconfig-paths": "^3.8.0",
+    "tslib": "^1.9.3",
     "tslint": "^5.12.1",
     "typescript": "^3.7.2"
   },
   "dependencies": {
-    "@babel/polyfill": "^7.2.5",
-    "aws-cdk": "1.14.0",
-    "dotenv": "^8.1.0",
-    "tslib": "^1.9.3"
+    "aws-cdk": "1.14.0"
   }
 }

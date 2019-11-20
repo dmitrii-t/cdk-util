@@ -1,5 +1,6 @@
 {
     "presets": [
+        "@babel/preset-typescript",
         [
             "@babel/preset-env",
             {
@@ -7,12 +8,6 @@
                     "node": "current"
                 }
             }
-        ],
-        "@babel/preset-typescript"
-    ],
-    "plugins": [
-        "@babel/plugin-proposal-numeric-separator",
-        "@babel/plugin-proposal-class-properties",
-        "@babel/plugin-proposal-object-rest-spread"
+        ]
     ]
 }

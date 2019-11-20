@@ -10,13 +10,6 @@
       "node",
       "chai",
       "mocha"
-    ],
-    "noEmit": true
-  },
-  "include": [
-    "./src/**/*.ts"
-  ],
-  "exclude": [
-    "node_modules"
-  ]
+    ]
+  }
 }
