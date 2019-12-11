@@ -8,12 +8,51 @@ import {AppStacks, DefaultSelection, ExtendedStackSelection, Tag} from 'aws-cdk/
 import {CloudFormationDeploymentTarget} from 'aws-cdk/lib/api/deployment-target';
 import {Mode} from 'aws-cdk/lib/api/aws-auth/credentials';
 import {SDK} from 'aws-cdk/lib/api/util/sdk';
+import * as cfn from 'aws-cdk/lib/api/util/cloudformation';
 
-const cfn = require('aws-cdk/lib/api/util/cloudformation');
+export interface CdkProps {
+  app: core.App;
+  name: string;
+  exclusively: boolean;
+}
 
-/**
- * CDK context
- */
+export interface CdkResult {
+  environment: Environment;
+  stack: CloudFormation.Stack;
+}
+
+export async function deployStack(props: CdkProps) {
+  const {app, name, exclusively} = props;
+
+  console.info(`+++ Deploying AWS CDK app ${name} exclusively ${exclusively}`);
+  const cdkCtx = await new CdkContext(app, name, exclusively);
+  await cdkCtx.deploy();
+}
+
+export async function destroyStack(props: CdkProps): Promise<void> {
+  const {app, name, exclusively} = props;
+
+  console.info(`--- Destroying AWS CDK app ${name} exclusively ${exclusively}`);
+  const cdkCtx = await new CdkContext(app, name, exclusively);
+  await cdkCtx.destroy();
+}
+
+export function withStack(props: CdkProps, block: (stack: CdkResult) => Promise<void>) {
+  return (done: any) => {
+    describeStack(props)
+      .then(block)
+      .then(() => done())
+      .catch(err => done(err));
+  };
+}
+
+async function describeStack(props: CdkProps): Promise<CdkResult> {
+  const {app, name, exclusively} = props;
+  const cdkCtx = await new CdkContext(app, name, exclusively);
+  return await cdkCtx.describe();
+}
+
+/** CDK context */
 class CdkContext {
 
   private readonly config: Configuration;
@@ -76,68 +115,31 @@ class CdkContext {
     });
   }
 
-  public async describe(): Promise<CdkStackDescription> {
+  public async describe(): Promise<CdkResult> {
     await this.config.load();
-    const stackList = await this.appStacks.selectStacks([this.name], {
+    const artifactList = await this.appStacks.selectStacks([this.name], {
       extend: this.exclusively ? ExtendedStackSelection.None : ExtendedStackSelection.Upstream,
       defaultBehavior: DefaultSelection.OnlySingle
     });
 
-    if (stackList.length === 0) {
+    if (artifactList.length === 0) {
       throw Error(`No stacks found by name ${this.name}`);
     }
 
-    const stack = stackList[0];
-    const cfnClient = await this.aws.cloudFormation(stack.environment.account, stack.environment.region, Mode.ForWriting);
-    const descr = await cfn.describeStack(cfnClient, this.name);
+    const artifact = artifactList[0];
+    const cfnClient = await this.aws.cloudFormation(
+      artifact.environment.account,
+      artifact.environment.region,
+      Mode.ForWriting);
+
+    const stack = await cfn.describeStack(cfnClient, this.name);
     return {
       environment: {
-        account: stack.environment.account,
-        region: stack.environment.region
+        account: artifact.environment.account,
+        region: artifact.environment.region
       },
-      stack: descr!!,
+      stack,
     };
   }
 }
 
-export interface CdkUtilProps {
-  app: core.App;
-  name: string;
-  exclusively: boolean;
-}
-
-export interface CdkStackDescription {
-  environment: Environment;
-  stack: CloudFormation.Stack;
-}
-
-export async function deployStack(props: CdkUtilProps) {
-  const {app, name, exclusively} = props;
-
-  console.info(`+++ Deploying AWS CDK app ${name} exclusively ${exclusively}`);
-  const cdkCtx = await new CdkContext(app, name, exclusively);
-  await cdkCtx.deploy();
-}
-
-export async function describeStack(props: CdkUtilProps): Promise<CdkStackDescription> {
-  const {app, name, exclusively} = props;
-  const cdkCtx = await new CdkContext(app, name, exclusively);
-  return await cdkCtx.describe();
-}
-
-export async function destroyStack(props: CdkUtilProps): Promise<void> {
-  const {app, name, exclusively} = props;
-
-  console.info(`--- Destroying AWS CDK app ${name} exclusively ${exclusively}`);
-  const cdkCtx = await new CdkContext(app, name, exclusively);
-  await cdkCtx.destroy();
-}
-
-export function withStack(props: CdkUtilProps, block: (descr: CdkStackDescription) => Promise<void>) {
-  return (done: any) => {
-    describeStack(props)
-      .then(block)
-      .then(() => done())
-      .catch(err => done(err));
-  };
-}
