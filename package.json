@@ -4,8 +4,8 @@
   "description": "cdk-util",
   "main": "dist/index.js",
   "license": "MIT",
-  "author": "https://github.com/dtcimbal",
-  "repository": "https://github.com/dtcimbal/cdk-util.git",
+  "author": "https://github.com/dmitriitc",
+  "repository": "https://github.com/dmitriitc/cdk-util.git",
   "engines": {
     "node": ">=10.x"
   },
