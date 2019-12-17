@@ -5,7 +5,6 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.deployStack = deployStack;
 exports.destroyStack = destroyStack;
-exports.withStack = withStack;
 
 var _diff = require("aws-cdk/lib/diff");
 
@@ -29,57 +28,44 @@ function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj;
 
 async function deployStack(props) {
   const {
-    app,
     name,
     exclusively
   } = props;
   console.info(`+++ Deploying AWS CDK app ${name} exclusively ${exclusively}`);
-  const cdkCtx = await new CdkContext(app, name, exclusively);
+  const cdkCtx = await CdkContext.create(props);
   await cdkCtx.deploy();
+  return await cdkCtx.describe();
 }
 
 async function destroyStack(props) {
   const {
-    app,
     name,
     exclusively
   } = props;
   console.info(`--- Destroying AWS CDK app ${name} exclusively ${exclusively}`);
-  const cdkCtx = await new CdkContext(app, name, exclusively);
+  const cdkCtx = await CdkContext.create(props);
   await cdkCtx.destroy();
-}
-
-function withStack(props, block) {
-  return done => {
-    describeStack(props).then(block).then(() => done()).catch(err => done(err));
-  };
-}
-
-async function describeStack(props) {
-  const {
-    app,
-    name,
-    exclusively
-  } = props;
-  const cdkCtx = await new CdkContext(app, name, exclusively);
-  return await cdkCtx.describe();
 }
 /** CDK context */
 
 
 class CdkContext {
-  constructor(app, name, exclusively, tags = [], aws = new _sdk.SDK({
-    ec2creds: true
-  })) {
-    this.app = app;
-    this.name = name;
-    this.exclusively = exclusively;
-    this.tags = tags;
-    this.aws = aws;
+  // Factory method
+  static async create(props) {
+    const cdkCtx = new CdkContext(props);
+    await cdkCtx.config.load();
+    return cdkCtx;
+  }
+
+  constructor(props) {
+    this.props = props;
+    this.aws = new _sdk.SDK({
+      ec2creds: true
+    });
     this.config = new _settings.Configuration({});
     this.appStacks = new _stacks.AppStacks({
       configuration: this.config,
-      synthesizer: async () => this.app.synth(),
+      synthesizer: async () => this.props.app.synth(),
       aws: this.aws,
       ignoreErrors: false,
       verbose: true,
@@ -95,11 +81,10 @@ class CdkContext {
   }
 
   async deploy() {
-    await this.config.load();
     await this.cdkToolkit.deploy({
-      stackNames: [this.name],
-      exclusively: this.exclusively,
-      tags: this.tags,
+      stackNames: [this.props.name],
+      exclusively: this.props.exclusively,
+      tags: this.props.tags,
       sdk: this.aws,
       // roleArn: args.roleArn,
       requireApproval: _diff.RequireApproval.Never // ci: args.ci,
@@ -109,37 +94,28 @@ class CdkContext {
   }
 
   async destroy() {
-    await this.config.load();
     await this.cdkToolkit.destroy({
       // roleArn: args.roleArn,
-      stackNames: [this.name],
-      exclusively: this.exclusively,
+      stackNames: [this.props.name],
+      exclusively: this.props.exclusively,
       sdk: this.aws,
       force: true
     });
   }
 
   async describe() {
-    await this.config.load();
-    const artifactList = await this.appStacks.selectStacks([this.name], {
-      extend: this.exclusively ? _stacks.ExtendedStackSelection.None : _stacks.ExtendedStackSelection.Upstream,
+    const artifactList = await this.appStacks.selectStacks([this.props.name], {
+      extend: this.props.exclusively ? _stacks.ExtendedStackSelection.None : _stacks.ExtendedStackSelection.Upstream,
       defaultBehavior: _stacks.DefaultSelection.OnlySingle
     });
 
     if (artifactList.length === 0) {
-      throw Error(`No stacks found by name ${this.name}`);
+      throw Error(`No stacks found by name ${this.props.name}`);
     }
 
     const artifact = artifactList[0];
     const cfnClient = await this.aws.cloudFormation(artifact.environment.account, artifact.environment.region, _credentials.Mode.ForWriting);
-    const stack = await cfn.describeStack(cfnClient, this.name);
-    return {
-      environment: {
-        account: artifact.environment.account,
-        region: artifact.environment.region
-      },
-      stack
-    };
+    return await cfn.describeStack(cfnClient, this.props.name);
   }
 
 }

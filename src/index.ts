@@ -1,5 +1,4 @@
 import * as core from '@aws-cdk/core';
-import {Environment} from '@aws-cdk/core';
 import {RequireApproval} from 'aws-cdk/lib/diff';
 import {CloudFormation} from 'aws-sdk';
 import {Configuration} from 'aws-cdk/lib/settings';
@@ -14,46 +13,33 @@ export interface CdkProps {
   app: core.App;
   name: string;
   exclusively: boolean;
+  tags: Tag[];
 }
 
-export interface CdkResult {
-  environment: Environment;
-  stack: CloudFormation.Stack;
-}
-
-export async function deployStack(props: CdkProps) {
-  const {app, name, exclusively} = props;
-
+export async function deployStack(props: CdkProps): Promise<CloudFormation.Stack> {
+  const {name, exclusively} = props;
   console.info(`+++ Deploying AWS CDK app ${name} exclusively ${exclusively}`);
-  const cdkCtx = await new CdkContext(app, name, exclusively);
+  const cdkCtx = await CdkContext.create(props);
   await cdkCtx.deploy();
+  return await cdkCtx.describe();
 }
 
 export async function destroyStack(props: CdkProps): Promise<void> {
-  const {app, name, exclusively} = props;
-
+  const {name, exclusively} = props;
   console.info(`--- Destroying AWS CDK app ${name} exclusively ${exclusively}`);
-  const cdkCtx = await new CdkContext(app, name, exclusively);
+  const cdkCtx = await CdkContext.create(props);
   await cdkCtx.destroy();
-}
-
-export function withStack(props: CdkProps, block: (stack: CdkResult) => Promise<void>) {
-  return (done: any) => {
-    describeStack(props)
-      .then(block)
-      .then(() => done())
-      .catch(err => done(err));
-  };
-}
-
-async function describeStack(props: CdkProps): Promise<CdkResult> {
-  const {app, name, exclusively} = props;
-  const cdkCtx = await new CdkContext(app, name, exclusively);
-  return await cdkCtx.describe();
 }
 
 /** CDK context */
 class CdkContext {
+
+  // Factory method
+  static async create(props: CdkProps): Promise<CdkContext> {
+    const cdkCtx = new CdkContext(props);
+    await cdkCtx.config.load();
+    return cdkCtx;
+  }
 
   private readonly config: Configuration;
 
@@ -63,17 +49,17 @@ class CdkContext {
 
   private readonly provisioner: CloudFormationDeploymentTarget;
 
-  constructor(private readonly app: core.App,
-              private readonly name: string,
-              private readonly exclusively: boolean,
-              private readonly tags: Tag[] = [],
-              private readonly aws: SDK = new SDK({ec2creds: true})) {
+  private readonly aws: SDK;
+
+  private constructor(private readonly props: CdkProps) {
+
+    this.aws = new SDK({ec2creds: true});
 
     this.config = new Configuration({});
 
     this.appStacks = new AppStacks({
       configuration: this.config,
-      synthesizer: async () => this.app.synth(),
+      synthesizer: async () => this.props.app.synth(),
       aws: this.aws,
       ignoreErrors: false,
       verbose: true,
@@ -91,11 +77,10 @@ class CdkContext {
   }
 
   public async deploy() {
-    await this.config.load();
     await this.cdkToolkit.deploy({
-      stackNames: [this.name],
-      exclusively: this.exclusively,
-      tags: this.tags,
+      stackNames: [this.props.name],
+      exclusively: this.props.exclusively,
+      tags: this.props.tags,
       sdk: this.aws,
       // roleArn: args.roleArn,
       requireApproval: RequireApproval.Never,
@@ -105,25 +90,23 @@ class CdkContext {
   }
 
   public async destroy() {
-    await this.config.load();
     await this.cdkToolkit.destroy({
       // roleArn: args.roleArn,
-      stackNames: [this.name],
-      exclusively: this.exclusively,
+      stackNames: [this.props.name],
+      exclusively: this.props.exclusively,
       sdk: this.aws,
       force: true,
     });
   }
 
-  public async describe(): Promise<CdkResult> {
-    await this.config.load();
-    const artifactList = await this.appStacks.selectStacks([this.name], {
-      extend: this.exclusively ? ExtendedStackSelection.None : ExtendedStackSelection.Upstream,
+  public async describe(): Promise<CloudFormation.Stack> {
+    const artifactList = await this.appStacks.selectStacks([this.props.name], {
+      extend: this.props.exclusively ? ExtendedStackSelection.None : ExtendedStackSelection.Upstream,
       defaultBehavior: DefaultSelection.OnlySingle
     });
 
     if (artifactList.length === 0) {
-      throw Error(`No stacks found by name ${this.name}`);
+      throw Error(`No stacks found by name ${this.props.name}`);
     }
 
     const artifact = artifactList[0];
@@ -132,14 +115,7 @@ class CdkContext {
       artifact.environment.region,
       Mode.ForWriting);
 
-    const stack = await cfn.describeStack(cfnClient, this.name);
-    return {
-      environment: {
-        account: artifact.environment.account,
-        region: artifact.environment.region
-      },
-      stack,
-    };
+    return await cfn.describeStack(cfnClient, this.props.name);
   }
 }
 

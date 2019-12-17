@@ -3,7 +3,7 @@ import {App, CfnOutput, Stack} from '@aws-cdk/core';
 import {expect} from 'chai';
 import * as sns from '@aws-cdk/aws-sns';
 import * as path from 'path';
-import {deployStack, destroyStack, withStack} from "./index";
+import {deployStack, destroyStack} from "./index";
 import * as AWS from 'aws-sdk';
 
 /**
@@ -11,7 +11,7 @@ import * as AWS from 'aws-sdk';
  */
 const CdkOut = path.resolve('cdk.out');
 
-describe('given cdk stack which creates an aws resource such as sns topic', () => {
+describe(`given cdk stack which creates an aws resource such as sns topic`, () => {
   /**
    * Stack to deploy the construct for tests
    */
@@ -30,28 +30,33 @@ describe('given cdk stack which creates an aws resource such as sns topic', () =
   const app = new App({outdir: CdkOut});
   const stack = new CdkUtilTest(app, id);
 
+  let topicArn: string;
+
   // Setup task
   before(async () => {
-    await deployStack({name: id, app, exclusively: true});
+    const stack = await deployStack({name: id, app, exclusively: true, tags: []});
+    topicArn = stack.Outputs!!.find(it => it.OutputKey === 'TopicArn')!!.OutputValue;
   });
 
   // Cleanup task
   after(async () => {
-    await destroyStack({name: id, app, exclusively: true});
+    await destroyStack({name: id, app, exclusively: true, tags: []});
   });
 
-  it('should return arn of the topic', withStack({name: id, app, exclusively: true}, async ({environment, stack}) => {
-    // When
-    const topicArn = stack.Outputs!!.find(it => it.OutputKey === 'TopicArn')!!.OutputValue;
+  describe(`when the stack is created`, () => {
+    // --
+    it(`then the stack output topicArn should exist`, async () => {
+      expect(topicArn).to.exist;
+    });
 
-    AWS.config.update({region: 'us-west-2'});
-    const snsClient = new AWS.SNS();
+    it('then we should be able to publish a message to the topic successfully', async () => {
+      AWS.config.update({region: 'us-west-2'});
+      const snsClient = new AWS.SNS();
 
-    // Then
-    expect(topicArn).to.exist;
-    expect(async () => {
-      await snsClient.publish({TopicArn: topicArn, Message: "test message"}).promise()
-    }).to.not.throw();
-  }));
+      expect(async () => {
+        await snsClient.publish({TopicArn: topicArn, Message: "test message"}).promise()
+      }).to.not.throw();
+    });
+  });
 });
 
