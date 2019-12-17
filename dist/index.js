@@ -27,34 +27,24 @@ function _getRequireWildcardCache() { if (typeof WeakMap !== "function") return 
 function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
 
 async function deployStack(props) {
-  const {
-    name,
-    exclusively
-  } = props;
-  console.info(`+++ Deploying AWS CDK app ${name} exclusively ${exclusively}`);
-  const cdkCtx = await CdkContext.create(props);
-  await cdkCtx.deploy();
-  return await cdkCtx.describe();
+  const cdkUtil = await CdkUtil.create(props);
+  await cdkUtil.deploy();
+  return await cdkUtil.describe();
 }
 
 async function destroyStack(props) {
-  const {
-    name,
-    exclusively
-  } = props;
-  console.info(`--- Destroying AWS CDK app ${name} exclusively ${exclusively}`);
-  const cdkCtx = await CdkContext.create(props);
-  await cdkCtx.destroy();
+  const cdkUtil = await CdkUtil.create(props);
+  await cdkUtil.destroy();
 }
 /** CDK context */
 
 
-class CdkContext {
+class CdkUtil {
   // Factory method
   static async create(props) {
-    const cdkCtx = new CdkContext(props);
-    await cdkCtx.config.load();
-    return cdkCtx;
+    const cdkUtil = new CdkUtil(props);
+    await cdkUtil.config.load();
+    return cdkUtil;
   }
 
   constructor(props) {
@@ -64,28 +54,32 @@ class CdkContext {
     });
     this.config = new _settings.Configuration({});
     this.appStacks = new _stacks.AppStacks({
+      aws: this.aws,
       configuration: this.config,
       synthesizer: async () => this.props.app.synth(),
-      aws: this.aws,
       ignoreErrors: false,
       verbose: true,
       strict: true
     });
-    this.provisioner = new _deploymentTarget.CloudFormationDeploymentTarget({
-      aws: this.aws
-    });
     this.cdkToolkit = new _cdkToolkit.CdkToolkit({
-      appStacks: this.appStacks,
-      provisioner: this.provisioner
+      provisioner: new _deploymentTarget.CloudFormationDeploymentTarget({
+        aws: this.aws
+      }),
+      appStacks: this.appStacks
     });
   }
 
   async deploy() {
+    const {
+      name,
+      exclusively
+    } = this.props;
+    console.info(`+++ Deploying AWS CDK app ${name} exclusively ${exclusively}`);
     await this.cdkToolkit.deploy({
+      sdk: this.aws,
       stackNames: [this.props.name],
       exclusively: this.props.exclusively,
       tags: this.props.tags,
-      sdk: this.aws,
       // roleArn: args.roleArn,
       requireApproval: _diff.RequireApproval.Never // ci: args.ci,
       // reuseAssets: args['build-exclude'],
@@ -94,11 +88,16 @@ class CdkContext {
   }
 
   async destroy() {
+    const {
+      name,
+      exclusively
+    } = this.props;
+    console.info(`--- Destroying AWS CDK app ${name} exclusively ${exclusively}`);
     await this.cdkToolkit.destroy({
+      sdk: this.aws,
       // roleArn: args.roleArn,
       stackNames: [this.props.name],
       exclusively: this.props.exclusively,
-      sdk: this.aws,
       force: true
     });
   }

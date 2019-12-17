@@ -45,11 +45,11 @@ describe(`given cdk stack which creates an aws resource such as sns topic`, () =
 
   describe(`when the stack is created`, () => {
     // --
-    it(`then the stack output topicArn should exist`, async () => {
+    it(`then the stack output 'topicArn' should exist`, async () => {
       expect(topicArn).to.exist;
     });
 
-    it('then we should be able to publish a message to the topic successfully', async () => {
+    it('then a test message should be successfully published to the topic', async () => {
       AWS.config.update({region: 'us-west-2'});
       const snsClient = new AWS.SNS();
 

@@ -17,39 +17,33 @@ export interface CdkProps {
 }
 
 export async function deployStack(props: CdkProps): Promise<CloudFormation.Stack> {
-  const {name, exclusively} = props;
-  console.info(`+++ Deploying AWS CDK app ${name} exclusively ${exclusively}`);
-  const cdkCtx = await CdkContext.create(props);
-  await cdkCtx.deploy();
-  return await cdkCtx.describe();
+  const cdkUtil = await CdkUtil.create(props);
+  await cdkUtil.deploy();
+  return await cdkUtil.describe();
 }
 
 export async function destroyStack(props: CdkProps): Promise<void> {
-  const {name, exclusively} = props;
-  console.info(`--- Destroying AWS CDK app ${name} exclusively ${exclusively}`);
-  const cdkCtx = await CdkContext.create(props);
-  await cdkCtx.destroy();
+  const cdkUtil = await CdkUtil.create(props);
+  await cdkUtil.destroy();
 }
 
 /** CDK context */
-class CdkContext {
+class CdkUtil {
 
   // Factory method
-  static async create(props: CdkProps): Promise<CdkContext> {
-    const cdkCtx = new CdkContext(props);
-    await cdkCtx.config.load();
-    return cdkCtx;
+  static async create(props: CdkProps): Promise<CdkUtil> {
+    const cdkUtil = new CdkUtil(props);
+    await cdkUtil.config.load();
+    return cdkUtil;
   }
+
+  private readonly aws: SDK;
 
   private readonly config: Configuration;
 
   private readonly appStacks: AppStacks;
 
   private readonly cdkToolkit: CdkToolkit;
-
-  private readonly provisioner: CloudFormationDeploymentTarget;
-
-  private readonly aws: SDK;
 
   private constructor(private readonly props: CdkProps) {
 
@@ -58,30 +52,31 @@ class CdkContext {
     this.config = new Configuration({});
 
     this.appStacks = new AppStacks({
+      aws: this.aws,
       configuration: this.config,
       synthesizer: async () => this.props.app.synth(),
-      aws: this.aws,
       ignoreErrors: false,
       verbose: true,
       strict: true,
     });
 
-    this.provisioner = new CloudFormationDeploymentTarget({
-      aws: this.aws
-    });
-
     this.cdkToolkit = new CdkToolkit({
-      appStacks: this.appStacks,
-      provisioner: this.provisioner
+      provisioner: new CloudFormationDeploymentTarget({
+        aws: this.aws
+      }),
+      appStacks: this.appStacks
     });
   }
 
   public async deploy() {
+    const {name, exclusively} = this.props;
+    console.info(`+++ Deploying AWS CDK app ${name} exclusively ${exclusively}`);
+
     await this.cdkToolkit.deploy({
+      sdk: this.aws,
       stackNames: [this.props.name],
       exclusively: this.props.exclusively,
       tags: this.props.tags,
-      sdk: this.aws,
       // roleArn: args.roleArn,
       requireApproval: RequireApproval.Never,
       // ci: args.ci,
@@ -90,11 +85,14 @@ class CdkContext {
   }
 
   public async destroy() {
+    const {name, exclusively} = this.props;
+    console.info(`--- Destroying AWS CDK app ${name} exclusively ${exclusively}`);
+
     await this.cdkToolkit.destroy({
+      sdk: this.aws,
       // roleArn: args.roleArn,
       stackNames: [this.props.name],
       exclusively: this.props.exclusively,
-      sdk: this.aws,
       force: true,
     });
   }
