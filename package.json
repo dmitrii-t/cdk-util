@@ -1,6 +1,6 @@
 {
   "name": "cdk-util",
-  "version": "1.1.4",
+  "version": "1.1.5",
   "description": "cdk-util",
   "main": "dist/index.js",
   "license": "MIT",
