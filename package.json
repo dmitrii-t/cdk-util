@@ -4,8 +4,8 @@
   "description": "cdk-util",
   "main": "dist/index.js",
   "license": "MIT",
-  "author": "https://github.com/theotherdmitrii",
-  "repository": "https://github.com/theotherdmitrii/cdk-util.git",
+  "author": "https://github.com/dmitrii-t",
+  "repository": "https://github.com/dmitrii-t/cdk-util.git",
   "engines": {
     "node": ">=10.x"
   },
@@ -17,6 +17,7 @@
     "type": "tsc"
   },
   "keywords": [
+    "programmatic deploy",
     "typescript",
     "cdk-util",
     "aws-cdk",

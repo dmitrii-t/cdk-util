@@ -2,7 +2,7 @@
 
 Install the project locally
 ```
-git clone https://github.com/theotherdmitrii/aws-cdk-construct-topic-queue.git
+git clone https://github.com/dmitrii-t/aws-cdk-construct-topic-queue.git
 npm install
 ```
 
