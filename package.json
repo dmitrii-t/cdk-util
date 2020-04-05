@@ -53,12 +53,8 @@
     "typescript": "^3.7.2"
   },
   "peerDependencies": {
-    "@aws-cdk/core": "1.17.0",
-    "@aws-cdk/cx-api": "1.17.0",
-    "@aws-cdk/region-info": "1.17.0",
-    "aws-cdk": "1.17.1"
   },
   "dependencies": {
-
+    "aws-cdk": "1.17.1"
   }
 }
