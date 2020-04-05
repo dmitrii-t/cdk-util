@@ -10,7 +10,7 @@
     "node": ">=10.x"
   },
   "scripts": {
-    "clean": "rimraf dist",
+    "clean": "rimraf dist && rimraf cdk.out",
     "build": "TS_NODE_PROJECT=tsconfig.json babel ./src --out-dir ./dist --extensions \".ts\" --ignore \"src/**/*.spec.ts\" --source-maps",
     "test": "TS_NODE_PROJECT=tsconfig.json env-cmd mocha --timeout 600000 --require ./babel-hook.js \"./src/**/*.spec.ts\"",
     "lint": "tslint -c tslint.json 'src/**/*.ts'",
@@ -25,10 +25,11 @@
     "aws"
   ],
   "devDependencies": {
-    "@aws-cdk/core": "^1.18.0",
-    "@aws-cdk/cx-api": "^1.18.0",
-    "@aws-cdk/region-info": "^1.18.0",
-    "@aws-cdk/aws-sns": "^1.18.0",
+    "@aws-cdk/core": "1.17.0",
+    "@aws-cdk/cx-api": "1.17.0",
+    "@aws-cdk/region-info": "1.17.0",
+    "@aws-cdk/aws-sns": "1.17.0",
+    "aws-cdk": "1.17.1",
     "@babel/cli": "^7.7.0",
     "@babel/core": "^7.7.0",
     "@babel/plugin-proposal-class-properties": "^7.7.0",
@@ -53,8 +54,7 @@
     "typescript": "^3.7.2"
   },
   "peerDependencies": {
-  },
-  "dependencies": {
     "aws-cdk": "1.17.1"
-  }
+  },
+  "dependencies": {}
 }

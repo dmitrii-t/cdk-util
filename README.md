@@ -22,7 +22,7 @@ EOF
 
 Test utility functions
 ```bash
-npm run test
+npm test
 ```
 
 Create your stack
